@@ -139,6 +139,14 @@ void install_cdvd() {
     def("cdvdman", 37, "sceCdCallback", [](Cpu &c) { c.r[2] = g_cd.callback; g_cd.callback = arg(c, 0); });
     def("cdvdman", 38, "sceCdPause", [](Cpu &c) { c.r[2] = 1; });
     def("cdvdman", 39, "sceCdBreak", [](Cpu &c) { c.r[2] = 1; });
+    def("cdvdman", 50, "sceCdSC", [](Cpu &c) {
+        // The game's tiny ck01 module queries the CDVDMAN version (-9).
+        // Return the version of the virtual library installed above. See
+        // ps2sdk iop/cdvd/cdvdman/src/cdvdman.c, sceCdSC(0xFFFFFFF7).
+        if (arg(c, 0) == 0xFFFFFFF7u) { c.r[2] = 0x0101; return; }
+        std::fprintf(stderr, "[cdvd] unsupported sceCdSC request 0x%08X\n", arg(c, 0));
+        c.r[2] = 0;
+    });
     def("cdvdman", 74, "sceCdPowerOff", [](Cpu &c) { c.r[2] = 1; });
     def("cdvdman", 75, "sceCdMmode", [](Cpu &c) { c.r[2] = 1; });
     def("cdvdman", 78, "sceCdPOffCallback", [](Cpu &c) { c.r[2] = 0; });

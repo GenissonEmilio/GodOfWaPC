@@ -3,6 +3,7 @@
 #include "hw.hpp"
 #include "iop.hpp"
 #include "ps2/system.hpp"
+#include "ps2/host_file.hpp"
 
 #include "ps2/state.hpp"
 
@@ -14,6 +15,9 @@
 #include <deque>
 #include <fstream>
 #include <vector>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace ps2::iop::sio2 {
 
@@ -175,7 +179,7 @@ std::uint8_t xor_of(const std::uint8_t *p, std::size_t n) {
 void load_card() {
     if (g_card.present || g_options.memcard_path.empty()) return;
     g_card.data.assign(kCardBytes, 0xFF);
-    std::ifstream in(g_options.memcard_path, std::ios::binary);
+    std::ifstream in(host_path(g_options.memcard_path), std::ios::binary);
     if (in) in.read(reinterpret_cast<char *>(g_card.data.data()), static_cast<std::streamsize>(kCardBytes));
     g_card.present = true;
     std::fprintf(stderr, "[mc] card in slot 1: %s%s\n", g_options.memcard_path.c_str(), in ? "" : " (new, unformatted)");
@@ -322,17 +326,36 @@ void reset() {
     load_card();
 }
 
-void flush_cards() {
+void flush_cards(bool force) {
     Card &c = g_card;
-    if (!c.dirty || ++c.quiet < 50) return;
-    c.dirty = false;
-    std::ofstream out(g_options.memcard_path, std::ios::binary | std::ios::trunc);
+    if (!c.dirty || (!force && ++c.quiet < 50)) return;
+    c.quiet = 0;
+    const auto destination = host_path(g_options.memcard_path);
+    auto temporary = destination;
+    temporary += ".tmp";
+    std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
     if (out) out.write(reinterpret_cast<const char *>(c.data.data()), static_cast<std::streamsize>(c.data.size()));
+    out.flush();
+    out.close();
     if (!out) {
         std::fprintf(stderr, "[mc] cannot write %s\n", g_options.memcard_path.c_str());
         return;
     }
-    out.close();
+    // Keep the previous card intact until the entire replacement is written.
+    // A failed commit leaves dirty set, so a later frame can retry.
+#ifdef _WIN32
+    const bool replaced = MoveFileExW(temporary.c_str(), destination.c_str(),
+        MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
+#else
+    std::error_code ec;
+    std::filesystem::rename(temporary, destination, ec);
+    const bool replaced = !ec;
+#endif
+    if (!replaced) {
+        std::fprintf(stderr, "[mc] cannot replace %s\n", g_options.memcard_path.c_str());
+        return;
+    }
+    c.dirty = false;
     if (g_options.on_memcard_saved) g_options.on_memcard_saved();
 }
 

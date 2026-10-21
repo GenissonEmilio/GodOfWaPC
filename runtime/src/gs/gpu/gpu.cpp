@@ -63,6 +63,7 @@ WGPUBuffer g_query_resolve = nullptr, g_query_read = nullptr;
 bool g_query_pending = false, g_query_ready = false;
 std::uint64_t g_measured_ns = 0, g_measured = 0, g_total_passes = 0;
 WGPUDevice g_device = nullptr;
+Overlay g_overlay = nullptr;
 WGPUQueue g_queue = nullptr;
 WGPUBuffer g_vram = nullptr, g_tables = nullptr, g_params = nullptr, g_data = nullptr, g_clut = nullptr, g_scratch = nullptr, g_readback = nullptr, g_decoded = nullptr;
 std::uint32_t g_decoded_used = 0;
@@ -911,6 +912,10 @@ void submit(WGPUTextureView present_view = nullptr) {
         wgpuRenderPassEncoderSetPipeline(rp, g_blit);
         wgpuRenderPassEncoderSetBindGroup(rp, 0, g_blit_group, 0, nullptr);
         wgpuRenderPassEncoderDraw(rp, 3, 1, 0, 0);
+        if (g_overlay) {
+            wgpuRenderPassEncoderSetViewport(rp, 0, 0, w, h, 0, 1);
+            g_overlay(g_device, rp, static_cast<unsigned>(g_surface_format));
+        }
         wgpuRenderPassEncoderEnd(rp);
         wgpuRenderPassEncoderRelease(rp);
     }
@@ -1630,6 +1635,8 @@ void configure_surface() {
     wgpuSurfaceConfigure(g_surface, &config);
 }
 
+void set_overlay(Overlay callback) { g_overlay = callback; }
+
 bool attach_surface(const SurfaceTarget &target) {
     if (g_mode != Mode::primary || !g_device) return false;
     WGPUSurfaceDescriptor sd = WGPU_SURFACE_DESCRIPTOR_INIT;
@@ -1637,6 +1644,11 @@ bool attach_surface(const SurfaceTarget &target) {
     WGPUEmscriptenSurfaceSourceCanvasHTMLSelector canvas = WGPU_EMSCRIPTEN_SURFACE_SOURCE_CANVAS_HTML_SELECTOR_INIT;
     canvas.selector = view(target.selector ? target.selector : "#canvas");
     sd.nextInChain = &canvas.chain;
+#elif defined(_WIN32)
+    WGPUSurfaceSourceWindowsHWND win32 = WGPU_SURFACE_SOURCE_WINDOWS_HWND_INIT;
+    win32.hinstance = target.display;
+    win32.hwnd = target.surface;
+    sd.nextInChain = &win32.chain;
 #else
     WGPUSurfaceSourceXlibWindow xlib = WGPU_SURFACE_SOURCE_XLIB_WINDOW_INIT;
     WGPUSurfaceSourceWaylandSurface wayland = WGPU_SURFACE_SOURCE_WAYLAND_SURFACE_INIT;

@@ -15,7 +15,7 @@ struct DisplaySource {
 };
 
 struct SurfaceTarget {
-    enum Kind { X11, Wayland, Canvas } kind;
+    enum Kind { X11, Wayland, Canvas, Win32 } kind;
     void *display;
     std::uint64_t window;
     void *surface;
@@ -41,6 +41,8 @@ void write_state(const std::vector<std::uint32_t> &vram, std::uint32_t scale, co
 bool display(const DisplaySource &src, std::vector<std::uint32_t> &rgba, std::uint32_t &width, std::uint32_t &height);
 bool display_async(const DisplaySource &src, std::vector<std::uint32_t> &rgba, std::uint32_t &width, std::uint32_t &height);
 bool attach_surface(const SurfaceTarget &target);
+using Overlay = void (*)(void* device, void* pass, unsigned format);
+void set_overlay(Overlay callback);
 void resize_surface(std::uint32_t width, std::uint32_t height);
 bool has_surface();
 bool present(const DisplaySource &src);

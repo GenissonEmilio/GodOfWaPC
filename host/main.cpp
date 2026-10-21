@@ -2,6 +2,7 @@
 
 #ifdef PS2_WINDOW
 #include "window.hpp"
+#include "native_ui.hpp"
 #endif
 #ifdef PS2_PROFILE
 #include "profile.hpp"
@@ -12,6 +13,10 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#endif
 
 void register_generated_code();
 void register_generated_vu();
@@ -31,6 +36,42 @@ int usage() {
 }
 
 int main(int argc, char **argv) {
+#ifdef _WIN32
+    // The Windows CRT's narrow argv follows the active code page. Keep file
+    // paths in the same UTF-8 encoding used by SDL and the launcher instead.
+    std::vector<std::string> utf8_args;
+    std::vector<char*> utf8_pointers;
+    int wide_count=0;
+    if (wchar_t** wide=CommandLineToArgvW(GetCommandLineW(),&wide_count)) {
+        for (int i=0;i<wide_count;++i) {
+            int bytes=WideCharToMultiByte(CP_UTF8,0,wide[i],-1,nullptr,0,nullptr,nullptr);
+            std::string argument(bytes,'\0');
+            WideCharToMultiByte(CP_UTF8,0,wide[i],-1,argument.data(),bytes,nullptr,nullptr);
+            argument.pop_back(); utf8_args.push_back(std::move(argument));
+        }
+        LocalFree(wide);
+        for (auto& argument:utf8_args) utf8_pointers.push_back(argument.data());
+        argc=wide_count; argv=utf8_pointers.data();
+    }
+#endif
+#ifdef PS2_WINDOW
+    std::vector<std::string> launch_args;
+    std::vector<char*> launch_pointers;
+    if (argc == 3 && std::strcmp(argv[1], "--install") == 0) return gow2::install_iso(argv[2]) ? 0 : 1;
+    if (argc == 3 && std::strcmp(argv[1], "--capture-launcher") == 0) {
+        gow2::launcher(launch_args, argv[2]);
+        return 0;
+    }
+    if (argc == 1) {
+        if (!gow2::launcher(launch_args)) return 0;
+        launch_pointers.push_back(argv[0]);
+        for (std::string& arg : launch_args) launch_pointers.push_back(arg.data());
+        argc = static_cast<int>(launch_pointers.size());
+        argv = launch_pointers.data();
+    } else {
+        gow2::load_settings();
+    }
+#endif
     if (argc < 2) return usage();
     std::vector<std::string> args{argv[1]};
     [[maybe_unused]] bool window = false, fullscreen = false;

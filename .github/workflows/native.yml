@@ -1,0 +1,64 @@
+name: Native build and memory-card checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang-18 libc++-18-dev libc++abi-18-dev cmake ninja-build python3 libsdl2-dev curl unzip
+      - name: Fetch renderer
+        run: sh scripts/fetch_wgpu.sh v29.0.1.1
+      - name: Compile tools, runtime and host with a data-free fixture
+        run: |
+          cmake -S . -B build/ci -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DPS2_GENERATED="$PWD/tests/fixtures/empty-game"
+          cmake --build build/ci --target eerecomp vurecomp gow2_memcard_check ps2run -j 2
+      - name: Verify card persistence across processes
+        run: ctest --test-dir build/ci --output-on-failure
+      - name: Render launcher without a game disc
+        env:
+          SDL_VIDEODRIVER: dummy
+        run: |
+          build/ci/ps2run --capture-launcher build/ci/launcher.bmp
+          test -s build/ci/launcher.bmp
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+      - name: Install native toolchain
+        shell: pwsh
+        run: |
+          ./scripts/setup_windows.ps1
+          curl.exe -fL --retry 2 -o tools/wgpu.zip https://github.com/gfx-rs/wgpu-native/releases/download/v29.0.1.1/wgpu-windows-x86_64-gnu-release.zip
+          if ($LASTEXITCODE -ne 0) { throw 'wgpu download failed' }
+          Expand-Archive -LiteralPath tools/wgpu.zip -DestinationPath third_party/wgpu-native-windows
+      - name: Compile tools, runtime and host with a data-free fixture
+        shell: pwsh
+        run: |
+          $compiler = "$PWD/tools/llvm-mingw-20261020-ucrt-x86_64/bin/x86_64-w64-mingw32-clang++.exe"
+          $env:PATH = (Split-Path -Parent $compiler) + ';' + $env:PATH
+          & tools/python/cmake/data/bin/cmake.exe -S . -B build/ci -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_CXX_COMPILER=$compiler" "-DCMAKE_MAKE_PROGRAM=$PWD/tools/python/bin/ninja.exe" "-DCMAKE_PREFIX_PATH=$PWD/tools/SDL2-2.32.10/x86_64-w64-mingw32" "-DPS2_WGPU_DIR=$PWD/third_party/wgpu-native-windows" "-DPS2_WGPU_LIBRARY=$PWD/third_party/wgpu-native-windows/lib/libwgpu_native.dll.a" "-DPS2_GENERATED=$PWD/tests/fixtures/empty-game"
+          if ($LASTEXITCODE -ne 0) { throw 'CMake configure failed' }
+          & tools/python/bin/ninja.exe -C build/ci eerecomp vurecomp gow2_memcard_check ps2run -j 2
+          if ($LASTEXITCODE -ne 0) { throw 'Native build failed' }
+          Copy-Item tools/llvm-mingw-20261020-ucrt-x86_64/x86_64-w64-mingw32/bin/*.dll build/ci
+          Copy-Item tools/SDL2-2.32.10/x86_64-w64-mingw32/bin/SDL2.dll build/ci
+          Copy-Item third_party/wgpu-native-windows/lib/wgpu_native.dll build/ci
+      - name: Verify card persistence across processes
+        shell: pwsh
+        run: tools/python/cmake/data/bin/ctest.exe --test-dir build/ci --output-on-failure
+      - name: Render launcher without a game disc
+        shell: pwsh
+        env:
+          SDL_VIDEODRIVER: dummy
+        run: |
+          & build/ci/ps2run.exe --capture-launcher build/ci/launcher.bmp
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path build/ci/launcher.bmp)) { throw 'Launcher capture failed' }

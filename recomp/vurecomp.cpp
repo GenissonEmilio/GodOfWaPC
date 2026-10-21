@@ -649,7 +649,7 @@ int main(int argc, char **argv) {
         f.read(reinterpret_cast<char *>(p.code.data()), static_cast<std::streamsize>(p.code.size()));
         const auto pcs = ps2::vu::reachable(p.code.data(), kMask, entry);
         if (ps2::vu::program_key(p.code.data(), pcs, entry) != key) {
-            std::fprintf(stderr, "%s: key mismatch, skipped\n", e.path().filename().c_str());
+            std::fprintf(stderr, "%s: key mismatch, skipped\n", e.path().filename().string().c_str());
             continue;
         }
         programs.push_back(std::move(p));

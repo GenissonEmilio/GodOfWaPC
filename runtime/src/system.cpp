@@ -16,6 +16,7 @@
 #include "ps2/memory.hpp"
 #include "ps2/state.hpp"
 #include "ps2/system.hpp"
+#include "ps2/host_file.hpp"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -305,7 +306,7 @@ bool save_state(const std::string &path) {
     try {
         state::Writer w;
         machine_state(w);
-        std::ofstream out(path, std::ios::binary);
+        std::ofstream out(host_path(path), std::ios::binary);
         out.write(reinterpret_cast<const char *>(w.out.data()), static_cast<std::streamsize>(w.out.size()));
         if (!out) throw std::runtime_error("cannot write " + path);
         std::fprintf(stderr, "[state] saved frame %llu to %s (%zu KB)\n", static_cast<unsigned long long>(g_frames), path.c_str(), w.out.size() >> 10);
@@ -330,7 +331,7 @@ bool load_state(const std::uint8_t *data, std::size_t size) {
 }
 
 bool load_state(const std::string &path) {
-    std::ifstream in(path, std::ios::binary);
+    std::ifstream in(host_path(path), std::ios::binary);
     if (!in) {
         std::fprintf(stderr, "[state] cannot open %s\n", path.c_str());
         return false;
@@ -342,7 +343,7 @@ bool load_state(const std::string &path) {
 std::uint64_t frame_count() { return g_frames; }
 
 bool load_elf(const std::string &path, std::uint32_t &entry) {
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(host_path(path), std::ios::binary);
     if (!file) return false;
     const std::vector<std::uint8_t> data{std::istreambuf_iterator<char>(file), {}};
     if (data.size() < 52 || std::memcmp(data.data(), "\x7f" "ELF", 4) != 0) return false;
@@ -384,7 +385,8 @@ void boot(std::uint32_t entry, const std::vector<std::string> &args) {
     iop::set_trace(g_options.trace_iop_modules, g_options.trace_iop_hle);
     iop::reset();
     std::vector<std::string> guest_args = args;
-    if (!guest_args.empty() && guest_args[0].find(':') == std::string::npos) {
+    if (!guest_args.empty() && (guest_args[0].find(':') == std::string::npos ||
+        (guest_args[0].size() > 2 && guest_args[0][1] == ':' && (guest_args[0][2] == '\\' || guest_args[0][2] == '/')))) {
         std::string name = guest_args[0].substr(guest_args[0].find_last_of("/\\") + 1);
         for (char &ch : name) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
         guest_args[0] = "cdrom0:\\" + name + ";1";
@@ -420,6 +422,7 @@ int run() {
         if (c.budget <= 0) refill(c);
         dispatch(c, 0, 0);
     }
+    iop::sio2::flush_cards(true);
     kernel::dump();
     iop::dump();
     sif::dump();

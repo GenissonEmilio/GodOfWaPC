@@ -1,4 +1,5 @@
 #include "ps2/disc.hpp"
+#include "ps2/host_file.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -63,7 +64,8 @@ void index_layer(std::uint32_t pvd_sector, std::uint32_t base) {
 }
 
 bool open(const std::string &path) {
-    g_file = std::fopen(path.c_str(), "rb");
+    if (g_file) { std::fclose(g_file); g_file = nullptr; }
+    g_file = host_fopen(path, "rb");
     if (!g_file) return false;
 #if defined(_WIN32)
     _fseeki64(g_file, 0, SEEK_END);
