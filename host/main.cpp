@@ -59,8 +59,7 @@ int main(int argc, char **argv) {
     std::vector<char*> launch_pointers;
     if (argc == 3 && std::strcmp(argv[1], "--install") == 0) return gow2::install_iso(argv[2]) ? 0 : 1;
     if (argc == 3 && std::strcmp(argv[1], "--capture-launcher") == 0) {
-        gow2::launcher(launch_args, argv[2]);
-        return 0;
+        return gow2::launcher(launch_args, argv[2]) ? 0 : 1;
     }
     if (argc == 1) {
         if (!gow2::launcher(launch_args)) return 0;

@@ -224,17 +224,20 @@ bool install_iso(const std::string& iso) {
 }
 
 bool launcher(std::vector<std::string>& args, const std::string& capture) {
-    SDL_SetMainReady(); if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER)!=0) return false;
+    SDL_SetMainReady();
+    if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER)!=0) {
+        std::fprintf(stderr,"[launcher] SDL initialization failed: %s\n",SDL_GetError()); return false;
+    }
     load_settings();
     auto* window=SDL_CreateWindow("God of War II - iniciar",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,1000,680,SDL_WINDOW_ALLOW_HIGHDPI|SDL_WINDOW_RESIZABLE);
-    if(!window) { SDL_Quit(); return false; }
+    if(!window) { std::fprintf(stderr,"[launcher] Cannot create window: %s\n",SDL_GetError()); SDL_Quit(); return false; }
     SDL_SetWindowMinimumSize(window,900,630);
     auto* renderer=SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
     if(!renderer) renderer=SDL_CreateRenderer(window,-1,SDL_RENDERER_SOFTWARE);
-    if(!renderer) { SDL_DestroyWindow(window); SDL_Quit(); return false; }
+    if(!renderer) { std::fprintf(stderr,"[launcher] Cannot create renderer: %s\n",SDL_GetError()); SDL_DestroyWindow(window); SDL_Quit(); return false; }
     ImGui::CreateContext(); theme(); ImGui_ImplSDL2_InitForSDLRenderer(window,renderer); ImGui_ImplSDLRenderer2_Init(renderer);
     char iso[4096]={}; std::snprintf(iso,sizeof iso,"%s",settings.iso.c_str());
-    bool done=false, play=false; std::string error, elf;
+    bool done=false, play=false, captured=false; std::string error, elf;
     int capture_frames=0;
     while(!done) {
         SDL_Event e;
@@ -279,9 +282,10 @@ bool launcher(std::vector<std::string>& args, const std::string& capture) {
             SDL_Surface* surface=SDL_CreateRGBSurfaceWithFormat(0,w,h,32,SDL_PIXELFORMAT_ARGB8888);
             if(surface) {
                 if(SDL_RenderReadPixels(renderer,nullptr,surface->format->format,surface->pixels,surface->pitch)==0)
-                    SDL_SaveBMP(surface,capture.c_str());
+                    captured=SDL_SaveBMP(surface,capture.c_str())==0;
                 SDL_FreeSurface(surface);
             }
+            if(!captured) std::fprintf(stderr,"[launcher] Capture failed: %s\n",SDL_GetError());
             done=true;
         }
         SDL_RenderPresent(renderer);
@@ -289,7 +293,7 @@ bool launcher(std::vector<std::string>& args, const std::string& capture) {
     }
     ImGui_ImplSDLRenderer2_Shutdown(); ImGui_ImplSDL2_Shutdown(); ImGui::DestroyContext();
     SDL_DestroyRenderer(renderer); SDL_DestroyWindow(window); SDL_Quit();
-    if(!play) return false;
+    if(!play) return captured;
     SDL_setenv("PS2_SCALE",std::to_string(settings.scale).c_str(),1);
     args={elf,"--disc",settings.iso,"--ntsc","--memcard",user_directory()+"Mcd001.ps2",settings.fullscreen?"--fullscreen":"--window"};
     if(settings.widescreen) args.push_back("--widescreen");
