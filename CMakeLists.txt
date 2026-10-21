@@ -138,7 +138,7 @@ if(PS2_GENERATED)
         return()
     endif()
 
-    add_executable(ps2run host/main.cpp)
+    add_executable(ps2run host/main.cpp host/control.cpp)
     target_link_libraries(ps2run PRIVATE ps2game ps2runtime)
     if(WIN32)
         target_link_options(ps2run PRIVATE -Wl,--stack,16777216)

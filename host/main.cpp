@@ -1,4 +1,5 @@
 #include "ps2/system.hpp"
+#include "control.hpp"
 
 #ifdef PS2_WINDOW
 #include "window.hpp"
@@ -74,6 +75,7 @@ int main(int argc, char **argv) {
     if (argc < 2) return usage();
     std::vector<std::string> args{argv[1]};
     [[maybe_unused]] bool window = false, fullscreen = false;
+    bool interactive = false;
     std::string load_path;
     for (int i = 2; i < argc; ++i) {
         const std::string a = argv[i];
@@ -119,7 +121,13 @@ int main(int argc, char **argv) {
             ps2::g_options.save_state_path = spec.substr(colon + 1);
         }
         else if (a == "--load-state" && i + 1 < argc) load_path = argv[++i];
+        else if (a == "--interactive") interactive = true;
         else return usage();
+    }
+
+    if (interactive) {
+        if (window) { std::fprintf(stderr,"--interactive requires headless mode\n"); return 2; }
+        enable_step_control();
     }
 
 #ifdef PS2_WINDOW
