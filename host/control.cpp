@@ -33,14 +33,13 @@ void enable_step_control() {
     ps2::g_options.on_vblank=[until=std::uint64_t{0}]() mutable {
         const auto frame=ps2::frame_count();
         if (frame<until) return;
-        release_pad();
         for (;;) {
             std::cout<<"[control] READY frame="<<frame<<std::endl;
             std::string line;
-            if (!std::getline(std::cin,line)) { ps2::halt("control input closed"); return; }
+            if (!std::getline(std::cin,line)) { release_pad(); ps2::halt("control input closed"); return; }
             std::istringstream in(line);
             std::string verb; in>>verb;
-            if (verb=="quit") { ps2::halt("control quit"); return; }
+            if (verb=="quit") { release_pad(); ps2::halt("control quit"); return; }
             if (verb=="capture" || verb=="save") {
                 std::string path; std::getline(in>>std::ws,path);
                 if (path.empty()) { std::cout<<"[control] ERROR missing path\n"; continue; }
@@ -63,7 +62,7 @@ void enable_step_control() {
                     std::cout<<"[control] ERROR step needs 1..1000000 frames\n"; continue;
                 }
                 in>>buttons;
-                ps2::Press press{};
+                ps2::Press press{frame+1,static_cast<std::uint32_t>(count),0,0};
                 std::vector<ps2::AxisPress> axes;
                 bool valid=buttons=="-" || ps2::parse_press(std::to_string(frame+1)+":"+buttons+":"+std::to_string(count),press);
                 std::string token;
@@ -78,8 +77,21 @@ void enable_step_control() {
                     axes.push_back(axis);
                 }
                 if (!valid) { std::cout<<"[control] ERROR invalid buttons or axes\n"; continue; }
-                if (buttons!="-") ps2::g_options.presses.push_back(press);
-                ps2::g_options.axis_presses=std::move(axes);
+                // A paused frame must retain the last pad state. Releasing
+                // it at every command boundary inserts unintended button-up
+                // frames into holds and QTEs. Set the next state before the
+                // callback returns, then maintain it until the next pause.
+                ps2::g_options.presses={press};
+                std::uint8_t values[]={128,128,128,128};
+                values[2]=(press.stick&4)?0:(press.stick&8)?255:128;
+                values[3]=(press.stick&1)?0:(press.stick&2)?255:128;
+                for (const auto& axis:axes) values[axis.axis]=axis.value;
+                ps2::set_pad_buttons(press.buttons);
+                ps2::g_options.axis_presses.clear();
+                for (int axis=0;axis<4;++axis) {
+                    ps2::set_pad_axis(axis,values[axis]);
+                    ps2::g_options.axis_presses.push_back({frame+1,static_cast<std::uint32_t>(count),axis,values[axis]});
+                }
                 until=frame+count;
                 return;
             }
