@@ -21,11 +21,7 @@ jobs:
       - name: Verify card persistence across processes
         run: ctest --test-dir build/ci --output-on-failure
       - name: Render launcher without a game disc
-        env:
-          SDL_VIDEODRIVER: dummy
-        run: |
-          build/ci/ps2run --capture-launcher build/ci/launcher.bmp
-          test -s build/ci/launcher.bmp
+        run: python3 tests/capture_launcher.py --runner build/ci/ps2run --output build/ci/launcher.bmp
   windows:
     runs-on: windows-2025
     steps:
@@ -57,8 +53,4 @@ jobs:
         run: tools/python/cmake/data/bin/ctest.exe --test-dir build/ci --output-on-failure
       - name: Render launcher without a game disc
         shell: pwsh
-        env:
-          SDL_VIDEODRIVER: dummy
-        run: |
-          & build/ci/ps2run.exe --capture-launcher build/ci/launcher.bmp
-          if ($LASTEXITCODE -ne 0 -or !(Test-Path build/ci/launcher.bmp)) { throw 'Launcher capture failed' }
+        run: python tests/capture_launcher.py --runner build/ci/ps2run.exe --output build/ci/launcher.bmp
