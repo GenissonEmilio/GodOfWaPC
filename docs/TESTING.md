@@ -16,7 +16,9 @@ Ele aceita comandos pela entrada padrao. Para abrir uma sessao Windows:
 python scripts/control_session.py --runner build/windows-gow2/ps2run.exe games/gow2/disc/SCUS_974.81 --disc "C:\caminho\jogo.iso" --ntsc --memcard games/gow2/teste.ps2 --load-state games/gow2/checkpoint.state
 ```
 
-No Linux, use `python3` e `build/linux-gow2/ps2run`.
+No Linux, use `python3` e `build/linux-gow2/ps2run`. Para registrar entradas e
+saida do runtime, acrescente `--record games/gow2/sessao.txt` antes do caminho
+do executavel PS2. O registro continua local e nao entra no Git.
 
 Comandos:
 
@@ -26,7 +28,8 @@ Comandos:
 - `step 18 - rx=255`: movimenta o analogico direito para a direita.
 - `capture games/gow2/teste.ppm`: captura o frame pelo renderizador real.
 - `save games/gow2/checkpoint.state`: avanca 2 frames, salva no primeiro e
-  pausa no segundo. Assim, o evento de vblank seguinte acompanha o checkpoint.
+  pausa no segundo, mantendo a ultima entrada. Assim, o evento de vblank
+  seguinte acompanha o checkpoint. Use `step 1 -` antes se quiser soltar os botoes.
 - `quit`: fecha normalmente e grava alteracoes pendentes do cartao.
 
 Use os nomes de botoes do argumento `--press`: `cross`, `circle`, `square`,

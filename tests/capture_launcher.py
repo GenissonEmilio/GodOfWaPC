@@ -8,12 +8,13 @@ import subprocess
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--runner',required=True,type=Path)
 p.add_argument('--output',required=True,type=Path)
+p.add_argument('--tab',type=int,choices=range(4),default=0)
 a=p.parse_args()
 runner=a.runner.resolve(strict=True)
 output=a.output.resolve()
 output.unlink(missing_ok=True)
 result=subprocess.run([str(runner),'--capture-launcher',str(output)],
-                      env=dict(os.environ,SDL_VIDEODRIVER='dummy'),
+                      env=dict(os.environ,SDL_VIDEODRIVER='dummy',GOW2_CAPTURE_TAB=str(a.tab)),
                       stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=60)
 print(result.stdout.decode('utf-8',errors='replace'),end='')
 print(f'Launcher exit: {result.returncode} / 0x{result.returncode & 0xFFFFFFFF:08X}')

@@ -198,17 +198,10 @@ void poll_port(int port) {
     std::uint8_t l2 = 0xFF, r2 = 0xFF;
     std::uint8_t lx = 0x80, ly = 0x80, rx = 0x80, ry = 0x80;
     if (port == 0 && !gow2::capture_input()) {
-        const Uint8 *keys = SDL_GetKeyboardState(nullptr);
-        for (int i=0;i<16;++i)
-            if (gow2::settings.keys[i] && keys[gow2::settings.keys[i]]) pressed |= 1u << i;
-        if (keys[SDL_SCANCODE_LEFT]) lx = 0x00;
-        if (keys[SDL_SCANCODE_RIGHT]) lx = 0xFF;
-        if (keys[SDL_SCANCODE_UP]) ly = 0x00;
-        if (keys[SDL_SCANCODE_DOWN]) ly = 0xFF;
-        if (keys[SDL_SCANCODE_J]) rx = 0x00;
-        if (keys[SDL_SCANCODE_L]) rx = 0xFF;
-        if (keys[SDL_SCANCODE_I]) ry = 0x00;
-        if (keys[SDL_SCANCODE_K]) ry = 0xFF;
+        int count=0; const Uint8* keys=SDL_GetKeyboardState(&count);
+        const auto input=gow2::keyboard::map({keys,static_cast<std::size_t>(count)},gow2::settings.keys,gow2::settings.stickkeys);
+        pressed=input.buttons;
+        rx=input.axes[0]; ry=input.axes[1]; lx=input.axes[2]; ly=input.axes[3];
     }
     if (pad && !gow2::capture_input()) {
         for (const PadBinding &b : kPadButtons)

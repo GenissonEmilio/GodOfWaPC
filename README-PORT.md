@@ -42,16 +42,24 @@ graficos do jogo continuam vindo da sua ISO.
 | Triangulo | S |
 | L1 / R1 | Q / W |
 | L2 / R2 | 1 / 2 |
+| Direcional digital / selecionar magia | T, F, G, H |
+| L3 / R3 | C / V |
+| Furia dos Titas, quando disponivel | C + V |
 | Start / Select | Enter / Backspace |
 | Configuracoes e pausa do runtime | F1 |
 | Tela cheia | F11 |
 
-O painel permite remapear os botoes do teclado, ajustar volume e zona morta,
+O painel permite remapear os botoes e os dois analogicos no teclado, ajustar volume e zona morta,
 exibir FPS e escolher resolucao de 1x a 3x. Resolucao e formato sao aplicados
 na proxima abertura; volume e zona morta sao imediatos. O modo 16:9 exige
 ativar Widescreen nas opcoes do proprio jogo. Controles reconhecidos pelo
 SDL sao suportados, com ambos os analogicos e vibracao. O teste com um
 controle fisico ainda esta pendente.
+
+As setas controlam somente o analogico esquerdo. O direcional digital usa
+T/F/G/H para que mover Kratos nao altere a magia selecionada. Configuracoes
+antigas com as teclas padrao sao migradas; remapeamentos personalizados sao
+preservados. Ao remapear, Escape cancela e Delete remove a tecla.
 
 ## Saves
 

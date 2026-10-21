@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -33,7 +34,15 @@ std::uint64_t drawn_frames = 0;
 int tab = 0, binding = -1;
 double game_fps = 0, cpu_percent = 0, gpu_percent = 0, memory_mb = 0;
 const ImVec4 gold{0.87f,0.69f,0.39f,1}, muted{0.58f,0.59f,0.64f,1};
-const char* action_names[] = {"Select", "L3", "R3", "Start / pausa", "Cima", "Direita", "Baixo", "Esquerda", "L2", "R2", "L1", "R1", "Triangulo", "Circulo", "X / confirmar", "Quadrado"};
+const char* action_names[] = {"Select", "L3", "R3", "Start / pausa", "D-pad: cima", "D-pad: direita", "D-pad: baixo", "D-pad: esquerda", "L2 / magia", "R2 / arma", "L1", "R1 / interagir", "Triangulo", "Circulo", "X / confirmar", "Quadrado",
+    "Mover: cima", "Mover: direita", "Mover: baixo", "Mover: esquerda", "Esquiva: cima", "Esquiva: direita", "Esquiva: baixo", "Esquiva: esquerda"};
+void bind_key(SDL_Scancode key) {
+    if(key!=SDL_SCANCODE_ESCAPE) {
+        int& value=binding<16?settings.keys[binding]:settings.stickkeys[binding-16];
+        value=key==SDL_SCANCODE_DELETE?0:static_cast<int>(key);
+    }
+    binding=-1; save_settings();
+}
 
 std::filesystem::path path(const std::string& s) { return std::filesystem::path(std::u8string(s.begin(),s.end())); }
 std::string utf8(const std::filesystem::path& p) { auto s=p.u8string(); return {s.begin(),s.end()}; }
@@ -83,12 +92,13 @@ void controls_options() {
     ImGui::TextColored(gold,"CONTROLES");
     ImGui::TextWrapped("Controles USB/Bluetooth reconhecidos pelo SDL funcionam automaticamente, incluindo os dois analogicos e vibracao.");
     if(ImGui::SliderFloat("Zona morta",&settings.deadzone,0.0f,0.4f,"%.2f")) save_settings();
-    ImGui::TextWrapped("Setas: mover Kratos. I / J / K / L: analogico direito (esquiva). F1: abrir / fechar este painel. F11: tela cheia.");
-    ImGui::TextColored(muted,"Clique em uma tecla para remapear. Escape cancela.");
+    ImGui::TextWrapped("Padrao: setas movem; I / J / K / L esquivam; T / F / G / H selecionam magias; C + V ativa a Furia dos Titas quando disponivel. F1: painel. F11: tela cheia.");
+    ImGui::TextColored(muted,"Clique para remapear. Escape cancela; Delete limpa.");
     if(ImGui::BeginTable("keys",4,ImGuiTableFlags_SizingStretchSame)) {
-        for(int i=0;i<16;++i) {
+        for(int i=0;i<24;++i) {
             ImGui::PushID(i); ImGui::TableNextColumn(); ImGui::TextUnformatted(action_names[i]); ImGui::TableNextColumn();
-            const char* key = binding==i ? "Pressione..." : settings.keys[i] ? SDL_GetScancodeName(static_cast<SDL_Scancode>(settings.keys[i])) : "Sem tecla";
+            const int code=i<16?settings.keys[i]:settings.stickkeys[i-16];
+            const char* key = binding==i ? "Pressione..." : code ? SDL_GetScancodeName(static_cast<SDL_Scancode>(code)) : "Sem tecla";
             if(ImGui::Button(key,{-1,0})) binding=i;
             ImGui::PopID();
         }
@@ -189,7 +199,7 @@ std::string user_directory() {
     return directory;
 }
 void load_settings() {
-    std::ifstream in(path(user_directory()+"settings.ini")); std::string key;
+    std::ifstream in(path(user_directory()+"settings.ini")); std::string key; unsigned keys_version=0;
     while(in>>key) {
         if(key=="iso") in>>std::quoted(settings.iso);
         else if(key=="scale") in>>settings.scale;
@@ -199,17 +209,23 @@ void load_settings() {
         else if(key=="volume") in>>settings.volume;
         else if(key=="deadzone") in>>settings.deadzone;
         else if(key=="keys") for(int& value:settings.keys) in>>value;
+        else if(key=="stickkeys") for(int& value:settings.stickkeys) in>>value;
+        else if(key=="keys_version") in>>keys_version;
         else { std::string ignored; std::getline(in,ignored); }
     }
     settings.scale=std::clamp(settings.scale,1,3); settings.volume=std::clamp(settings.volume,0.0f,1.0f);
     settings.deadzone=std::clamp(settings.deadzone,0.0f,0.4f);
     for(int& k:settings.keys) if(k<0||k>=SDL_NUM_SCANCODES) k=0;
+    for(int& k:settings.stickkeys) if(k<0||k>=SDL_NUM_SCANCODES) k=0;
+    keyboard::migrate(settings.keys,keys_version);
     master_volume.store(settings.volume);
 }
 void save_settings() {
     std::ofstream out(path(user_directory()+"settings.ini.tmp"));
     out<<"iso "<<std::quoted(settings.iso)<<"\nscale "<<settings.scale<<"\nfullscreen "<<settings.fullscreen<<"\nwide "<<settings.widescreen<<"\nstats "<<settings.stats<<"\nvolume "<<settings.volume<<"\ndeadzone "<<settings.deadzone<<"\nkeys";
     for(int k:settings.keys) out<<' '<<k;
+    out<<"\nkeys_version 2\nstickkeys";
+    for(int k:settings.stickkeys) out<<' '<<k;
     out<<'\n'; out.close();
     if(out) { std::error_code ec; std::filesystem::rename(path(user_directory()+"settings.ini.tmp"),path(user_directory()+"settings.ini"),ec);
         if(ec) { std::filesystem::copy_file(path(user_directory()+"settings.ini.tmp"),path(user_directory()+"settings.ini"),std::filesystem::copy_options::overwrite_existing,ec); }
@@ -229,6 +245,7 @@ bool launcher(std::vector<std::string>& args, const std::string& capture) {
         std::fprintf(stderr,"[launcher] SDL initialization failed: %s\n",SDL_GetError()); return false;
     }
     load_settings();
+    if(!capture.empty()) if(const char* selected=std::getenv("GOW2_CAPTURE_TAB")) tab=std::clamp(std::atoi(selected),0,3);
     auto* window=SDL_CreateWindow("God of War II - iniciar",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,1000,680,SDL_WINDOW_ALLOW_HIGHDPI|SDL_WINDOW_RESIZABLE);
     if(!window) { std::fprintf(stderr,"[launcher] Cannot create window: %s\n",SDL_GetError()); SDL_Quit(); return false; }
     SDL_SetWindowMinimumSize(window,900,630);
@@ -245,7 +262,7 @@ bool launcher(std::vector<std::string>& args, const std::string& capture) {
             ImGui_ImplSDL2_ProcessEvent(&e);
             if(e.type==SDL_QUIT) done=true;
             if(e.type==SDL_DROPFILE) { std::snprintf(iso,sizeof iso,"%s",e.drop.file); SDL_free(e.drop.file); }
-            if(e.type==SDL_KEYDOWN && binding>=0) { if(e.key.keysym.scancode!=SDL_SCANCODE_ESCAPE) settings.keys[binding]=e.key.keysym.scancode; binding=-1; save_settings(); }
+            if(e.type==SDL_KEYDOWN && binding>=0) bind_key(e.key.keysym.scancode);
         }
         ImGui_ImplSDLRenderer2_NewFrame(); ImGui_ImplSDL2_NewFrame(); ImGui::NewFrame();
         auto size=ImGui::GetIO().DisplaySize;
@@ -316,8 +333,7 @@ void init_overlay(SDL_Window* window) {
 void process_event(const SDL_Event& e) {
     ImGui_ImplSDL2_ProcessEvent(&e);
     if(e.type==SDL_KEYDOWN && binding>=0) {
-        if(e.key.keysym.scancode!=SDL_SCANCODE_ESCAPE) settings.keys[binding]=e.key.keysym.scancode;
-        binding=-1; save_settings(); return;
+        bind_key(e.key.keysym.scancode); return;
     }
     if(e.type==SDL_KEYDOWN && !e.key.repeat && e.key.keysym.scancode==SDL_SCANCODE_F1) {
         show_menu=!show_menu; pause_requested.store(show_menu); SDL_ShowCursor(show_menu?SDL_ENABLE:SDL_DISABLE);

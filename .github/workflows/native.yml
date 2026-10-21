@@ -17,7 +17,7 @@ jobs:
       - name: Compile tools, runtime and host with a data-free fixture
         run: |
           cmake -S . -B build/ci -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DPS2_GENERATED="$PWD/tests/fixtures/empty-game"
-          cmake --build build/ci --target eerecomp vurecomp gow2_memcard_check ps2run -j 2
+          cmake --build build/ci --target eerecomp vurecomp gow2_memcard_check gow2_input_check ps2run -j 2
       - name: Verify card persistence across processes
         run: ctest --test-dir build/ci --output-on-failure
       - name: Render launcher without a game disc
@@ -43,7 +43,7 @@ jobs:
           $env:PATH = (Split-Path -Parent $compiler) + ';' + $env:PATH
           & tools/python/cmake/data/bin/cmake.exe -S . -B build/ci -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_CXX_COMPILER=$compiler" "-DCMAKE_MAKE_PROGRAM=$PWD/tools/python/bin/ninja.exe" "-DCMAKE_PREFIX_PATH=$PWD/tools/SDL2-2.32.10/x86_64-w64-mingw32" "-DPS2_WGPU_DIR=$PWD/third_party/wgpu-native-windows" "-DPS2_WGPU_LIBRARY=$PWD/third_party/wgpu-native-windows/lib/libwgpu_native.dll.a" "-DPS2_GENERATED=$PWD/tests/fixtures/empty-game"
           if ($LASTEXITCODE -ne 0) { throw 'CMake configure failed' }
-          & tools/python/bin/ninja.exe -C build/ci eerecomp vurecomp gow2_memcard_check ps2run -j 2
+          & tools/python/bin/ninja.exe -C build/ci eerecomp vurecomp gow2_memcard_check gow2_input_check ps2run -j 2
           if ($LASTEXITCODE -ne 0) { throw 'Native build failed' }
           Copy-Item tools/llvm-mingw-20261020-ucrt-x86_64/x86_64-w64-mingw32/bin/*.dll build/ci
           Copy-Item tools/SDL2-2.32.10/x86_64-w64-mingw32/bin/SDL2.dll build/ci

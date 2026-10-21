@@ -3,6 +3,7 @@
 #include <array>
 #include <string>
 #include <vector>
+#include "keyboard.hpp"
 struct SDL_Window;
 union SDL_Event;
 
@@ -15,7 +16,8 @@ struct Settings {
     bool stats = true;
     float volume = 0.8f;
     float deadzone = 0.15f;
-    std::array<int,16> keys{42,0,0,40,82,79,81,80,30,31,20,26,22,27,29,4};
+    std::array<int,16> keys=keyboard::default_buttons;
+    std::array<int,8> stickkeys=keyboard::default_sticks;
 };
 extern Settings settings;
 extern std::atomic<bool> pause_requested;
