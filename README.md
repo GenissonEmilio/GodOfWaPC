@@ -3,6 +3,10 @@
 Adaptacao local de **God of War II USA (SCUS-97481)** para computadores x86-64,
 baseada em [PS2 Web Recomp](https://github.com/snuri00/ps2-web-recomp).
 
+**Previa experimental para testes.** Baixe o pacote de Windows ou Linux em
+[Releases](https://github.com/GenissonEmilio/GodOfWaPC/releases). A campanha
+completa ainda nao foi validada; os testes realizados estao em `VALIDACAO.md`.
+
 Abra `dist/GodOfWarII-Windows/GodOfWarII.exe` no Windows ou
 `dist/GodOfWarII-Linux/GodOfWarII.sh` no Linux, selecione sua ISO e clique em
 **INICIAR JOGO**. Durante o jogo, **F1** abre as configuracoes e pausa a

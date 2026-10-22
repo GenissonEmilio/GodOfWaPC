@@ -6,6 +6,12 @@ O codigo do Emotion Engine e recompilado estaticamente para C++; o runtime
 ainda emula outros componentes do PS2. Nao e uma reimplementacao integral do
 motor do jogo. `docs/UPSTREAM.md` descreve a arquitetura da base.
 
+Esta e uma **previa experimental para testes**. A campanha inteira ainda nao
+foi validada. O segundo confronto com o Colosso foi concluido no Windows,
+com trechos de finalizacao repetidos no Linux; o primeiro altar teve save e
+carga pelo menu original verificados nas duas plataformas. Consulte
+`VALIDACAO.md` para o alcance dos testes e as limitacoes conhecidas.
+
 ## Abrir
 
 - Windows: abra `dist/GodOfWarII-Windows/GodOfWarII.exe`.

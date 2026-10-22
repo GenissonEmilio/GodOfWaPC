@@ -44,6 +44,8 @@ port integral do jogo.
 | Balanco no gancho e salto ate o corredor de saida | PASS, replay de 185 frames | PASS, mesma sequencia e imagem RGB identica |
 | Escada e sequencia do pe do Colosso | PASS, replay de 660 frames; parede rompida | PASS, mesma sequencia e imagem RGB identica |
 | Saida da parede para o chao da segunda arena | PASS, replay de 46 frames; apresentacao do confronto acionada | PASS, mesma sequencia e imagem RGB identica |
+| Segunda luta: sequencia Circulo, Circulo, Quadrado, Quadrado | PASS, replay de 1.114 frames | PASS, mesma sequencia e imagem RGB identica |
+| Segunda luta: Triangulo, Triangulo, X, X, resistencia e chegada ao palacio | PASS, replay de 2.724 frames | PASS, mesma sequencia e imagem RGB identica |
 
 As setas do teclado movimentam apenas o analogico esquerdo. O direcional
 digital, que seleciona magia, usa T/H/G/F; I/L/K/J controlam o analogico direito
@@ -68,8 +70,19 @@ Tambem foram repetidos nas duas plataformas o balanco e salto pelo gancho
 Colosso (13.151 a 13.811 dessa sessao). As capturas finais dos dois trechos
 foram identicas. A transicao da parede para o chao da segunda arena tambem foi
 repetida nas duas compilacoes, com imagem identica no frame 20.299 de outra
-sessao. No Windows, o combate seguinte esta em validacao; sua conclusao e o
-restante da campanha continuam pendentes.
+sessao. O segundo confronto com o Colosso foi concluido no Windows, com
+chegada a Rhodes Palace. As duas sequencias de quatro botoes foram repetidas
+nas duas plataformas: a primeira ate o frame 26.425 e a segunda, incluindo a
+resistencia com L1/R1 e a transicao para o palacio, ate o frame 33.587. As
+imagens finais foram identicas. A captura de chegada ao palacio ainda faz
+parte da cena de entrada; movimentacao e abertura do bau seguinte foram
+observadas depois no Windows. Esses replays partem de checkpoints e nao
+representam uma campanha continua completa nas duas plataformas.
+
+A previa experimental e disponibilizada para testes do usuario antes da
+validacao integral da campanha. O restante da campanha e os demais altares
+permanecem pendentes; somente o primeiro altar tem save e carga a frio
+verificados nas duas plataformas.
 
 O teste Linux do menu com limite de 1.400 frames excedeu seu prazo de 240
 segundos sob llvmpipe e foi interrompido no frame 925. A captura do frame 800
@@ -142,10 +155,10 @@ save Windows para Linux; os testes usam o ambiente WSL2/Dozen descrito acima.
 
 ## Limites de verificacao
 
-- A execucao Windows concluiu o primeiro confronto com o Colosso e chegou ao
-  combate da segunda arena. A conclusao desse combate, fases posteriores,
-  campanha completa e finais ainda nao foram validados. Podem existir chamadas
-  ou programas VU nao cobertos.
+- A execucao Windows concluiu os dois primeiros confrontos com o Colosso e
+  chegou a Rhodes Palace. Os trechos indicados foram repetidos no Linux.
+  Fases posteriores, campanha completa e finais ainda nao foram validados.
+  Podem existir chamadas ou programas VU nao cobertos.
 - Salvar e carregar passou nos dois sistemas no primeiro altar. Os demais
   pontos de save e a campanha completa ainda precisam de teste. Os checkpoints
   dos replays continuam separados dos saves originais do jogo.
