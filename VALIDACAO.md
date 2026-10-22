@@ -43,6 +43,7 @@ port integral do jogo.
 | Balista, quatro comandos de combate e transicao ao banho | PASS, replay de 2.644 frames na compilacao com 669 programas VU; imagem RGB identica a referencia | PASS, mesma sequencia e imagem RGB identica |
 | Balanco no gancho e salto ate o corredor de saida | PASS, replay de 185 frames | PASS, mesma sequencia e imagem RGB identica |
 | Escada e sequencia do pe do Colosso | PASS, replay de 660 frames; parede rompida | PASS, mesma sequencia e imagem RGB identica |
+| Saida da parede para o chao da segunda arena | PASS, replay de 46 frames; apresentacao do confronto acionada | PASS, mesma sequencia e imagem RGB identica |
 
 As setas do teclado movimentam apenas o analogico esquerdo. O direcional
 digital, que seleciona magia, usa T/H/G/F; I/L/K/J controlam o analogico direito
@@ -65,8 +66,10 @@ o banho no frame 51.145. A imagem final da balista foi identica nos dois sistema
 Tambem foram repetidos nas duas plataformas o balanco e salto pelo gancho
 (frames 7.835 a 8.020 de uma nova sessao) e a subida com a sequencia do pe do
 Colosso (13.151 a 13.811 dessa sessao). As capturas finais dos dois trechos
-foram identicas. O Windows prosseguiu pela parede de escalada; a arena seguinte
-e o restante da campanha continuam pendentes.
+foram identicas. A transicao da parede para o chao da segunda arena tambem foi
+repetida nas duas compilacoes, com imagem identica no frame 20.299 de outra
+sessao. No Windows, o combate seguinte esta em validacao; sua conclusao e o
+restante da campanha continuam pendentes.
 
 O teste Linux do menu com limite de 1.400 frames excedeu seu prazo de 240
 segundos sob llvmpipe e foi interrompido no frame 925. A captura do frame 800
@@ -140,8 +143,9 @@ save Windows para Linux; os testes usam o ambiente WSL2/Dozen descrito acima.
 ## Limites de verificacao
 
 - A execucao Windows concluiu o primeiro confronto com o Colosso e chegou ao
-  banho de Rhodes. Fases posteriores, campanha completa e finais ainda nao
-  foram validados. Podem existir chamadas ou programas VU nao cobertos.
+  combate da segunda arena. A conclusao desse combate, fases posteriores,
+  campanha completa e finais ainda nao foram validados. Podem existir chamadas
+  ou programas VU nao cobertos.
 - Salvar e carregar passou nos dois sistemas no primeiro altar. Os demais
   pontos de save e a campanha completa ainda precisam de teste. Os checkpoints
   dos replays continuam separados dos saves originais do jogo.
