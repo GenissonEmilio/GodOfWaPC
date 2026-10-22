@@ -11,7 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install native dependencies
-        run: sudo apt-get update && sudo apt-get install -y clang-18 libc++-18-dev libc++abi-18-dev cmake ninja-build python3 libsdl2-dev curl unzip
+        timeout-minutes: 10
+        run: |
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y clang-18 libc++-18-dev libc++abi-18-dev cmake ninja-build python3 libsdl2-dev curl unzip
       - name: Fetch renderer
         run: sh scripts/fetch_wgpu.sh v29.0.1.1
       - name: Compile tools, runtime and host with a data-free fixture

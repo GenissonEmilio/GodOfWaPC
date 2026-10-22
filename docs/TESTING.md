@@ -65,3 +65,36 @@ encerre o processo, inicie sem `--load-state`, carregue pelo menu original e
 confira local, inventario e progresso. Repita nas duas plataformas, com o
 cartao correspondente. Checkpoints do runtime e cartoes de teste SIO2 devem
 ser identificados separadamente dos saves feitos no altar.
+
+## Repeticao entre plataformas
+
+`tests/replay_gameplay.py` executa uma sequencia local e compara capturas reais
+com imagens de referencia revisadas. O arquivo JSON, os checkpoints e as
+referencias ficam fora do Git. Exemplo de estrutura:
+
+```json
+{
+  "name": "Trecho revisado da campanha",
+  "checkpoint": "inicio.state",
+  "actions": [
+    {"frames": 120, "buttons": "lright"},
+    {"frames": 6, "buttons": "square", "axes": {"lx": 200}},
+    {"capture": "resultado", "reference": "resultado.ppm", "max_mean_error": 1.0}
+  ]
+}
+```
+
+Os caminhos de entrada sao relativos ao JSON. Omita `checkpoint` para iniciar
+pelo boot. O campo opcional `card` fornece um cartao inicial; o teste trabalha
+com uma copia na pasta de saida e preserva o original. Essa pasta deve ser nova.
+
+```sh
+python3 tests/replay_gameplay.py --runner build/linux-gow2/ps2run --elf games/gow2/disc/SCUS_974.81 --iso /caminho/jogo.iso --scenario games/gow2/caso.json --output games/gow2/resultado-linux
+```
+
+O relatorio registra hashes do executavel, ELF, cenario, checkpoint e imagens,
+contagem exata de frames, erro medio RGB e codigo de saida. Uma diferenca acima
+do limite falha o caso e preserva o log e as capturas. Cada referencia precisa
+ser revisada para confirmar o comportamento esperado. Repetir uma imagem de
+checkpoint nao equivale a completar a campanha ou salvar no altar; o teste nao
+atribui essas certificacoes automaticamente.
