@@ -18,7 +18,10 @@ python scripts/control_session.py --runner build/windows-gow2/ps2run.exe games/g
 
 No Linux, use `python3` e `build/linux-gow2/ps2run`. Para registrar entradas e
 saida do runtime, acrescente `--record games/gow2/sessao.txt` antes do caminho
-do executavel PS2. O registro continua local e nao entra no Git.
+do executavel PS2. O registro continua local e nao entra no Git. O arquivo
+adicional `.sessions.jsonl` identifica cada inicio/reinicio, argumentos, hash
+do binario, posicoes dos registros e codigo de saida. Assim, retomar de outro
+checkpoint nao mistura silenciosamente duas sequencias de validacao.
 
 Comandos:
 
