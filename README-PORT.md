@@ -92,7 +92,10 @@ O script valida o executavel, extrai os dois pequenos arquivos de boot,
 traduz o MIPS para C++, compila, explora os destinos indiretos ausentes e
 recompila os programas de VU1 observados. Nao copia a ISO. Use `--jobs 4`
 para limitar compilacoes simultaneas ou `--no-explore` para recompilar uma
-configuracao ja explorada. Os relatorios ficam em `build/<plataforma>-gow2`.
+configuracao ja explorada. Esse modo tambem recompila os programas VU ja
+capturados. Os relatorios ficam em `build/<plataforma>-gow2`, com hash do
+executavel e revisao Git quando disponivel; arquivos-fonte sem Git registram
+a revisao como desconhecida.
 
 Somente o executavel com SHA256
 `fd403603be46dea70d130695820d28b3f31de6d7e48484a5f006398a605f7dd6`

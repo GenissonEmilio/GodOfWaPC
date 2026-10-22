@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -29,6 +30,21 @@ SUFFIX = '.exe' if IS_WINDOWS else ''
 def run(args, **kwargs):
     print('+', ' '.join(map(str, args)), flush=True)
     return subprocess.run(list(map(str, args)), cwd=ROOT, check=True, **kwargs)
+
+
+def source_provenance(root=ROOT):
+    result = {'source_commit': None, 'source_dirty': None}
+    # GitHub source archives have no .git directory. Do not accidentally
+    # attribute an archive extracted inside another repository to its parent.
+    if not (root / '.git').exists():
+        return result
+    try:
+        revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True, stderr=subprocess.DEVNULL).strip()
+        dirty = subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=root, text=True, stderr=subprocess.DEVNULL)
+        result.update(source_commit=revision, source_dirty=bool(dirty.strip()))
+    except (OSError, subprocess.CalledProcessError):
+        pass
+    return result
 
 
 def tool(name, candidates=()):
@@ -129,6 +145,14 @@ def main():
     def translate():
         run([compiler, elf, '--entries', entry_file, '--out', generated])
 
+    def translate_vu():
+        result = run([vucompiler, game / 'vu1', generated], stdout=subprocess.PIPE, text=True)
+        print(result.stdout, end='', flush=True)
+        match = re.search(r'(\d+) VU1 programs,', result.stdout)
+        if not match:
+            raise RuntimeError('O compilador VU nao informou a quantidade de programas.')
+        return int(match[1])
+
     def compile_game():
         run([*common, '-B', build, f'-DPS2_GENERATED={generated}'])
         run([cmake, '--build', build, '--target', 'ps2run', '-j', args.jobs])
@@ -138,10 +162,12 @@ def main():
                 shutil.copy2(dll, build / dll.name)
 
     translate()
+    vu_programs = translate_vu()
     compile_game()
     runner = build / ('ps2run' + SUFFIX)
     report = {'platform': target, 'elf_sha256': sha, 'iso_bytes': iso.stat().st_size,
-              'exploration_frames': args.frames, 'rounds': [], 'campaign_completed': False}
+              'exploration_frames': args.frames, 'exploration_performed': not args.no_explore,
+              'vu1_aot_programs': vu_programs, 'rounds': [], 'campaign_completed': False}
     if not args.no_explore:
         for index in range(args.rounds):
             misses = game / f'misses-{target}.txt'
@@ -173,13 +199,12 @@ def main():
             compile_game()
         else:
             raise RuntimeError('Limite de exploracao atingido; ainda ha codigo a descobrir.')
-        run([vucompiler, game / 'vu1', generated])
+        report['vu1_aot_programs'] = translate_vu()
         compile_game()
     report['built_at_utc'] = datetime.now(timezone.utc).isoformat()
     report['binary_sha256'] = hashlib.sha256(runner.read_bytes()).hexdigest()
     report['compiler'] = subprocess.check_output([cxx, '--version'], text=True).splitlines()[0]
-    report['source_commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
-    report['source_dirty'] = bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT, text=True).strip())
+    report.update(source_provenance())
     (build / 'build-report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
     if args.package:
         run([sys.executable, ROOT / 'scripts/package_gow2.py', '--build', build])
