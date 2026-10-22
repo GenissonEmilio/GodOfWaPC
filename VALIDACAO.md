@@ -34,7 +34,7 @@ port integral do jogo.
 | Cartao SIO2: gravar e reler apos reiniciar processo | PASS, 10 execucoes | PASS, 10 execucoes |
 | Cartao SIO2: falha, nova tentativa e substituicao | PASS, arquivo anterior preservado | PASS, arquivo anterior preservado |
 | Cartao SIO2: gravacao forcada ao fechar | PASS | PASS |
-| Leitura do cartao vazio pelo menu original | Mensagem de ausencia de dados, boot de 900 frames usando analogico | Mesma mensagem capturada no frame 800 |
+| Leitura do cartao vazio pelo menu original | Mensagem de ausencia de dados, boot de 900 frames usando analogico | Mesma mensagem, boot de 900 frames com Dozen |
 | Teclado: analogicos, direcional digital e L3/R3 | PASS, oito casos | PASS, oito casos |
 | Sessao por passos: captura, checkpoint e reinicio | PASS | PASS, llvmpipe e Dozen |
 
@@ -43,7 +43,9 @@ digital, que seleciona magia, usa T/H/G/F; I/L/K/J controlam o analogico direito
 e C/V correspondem a L3/R3. O teste tambem confere direcoes opostas,
 remapeamento e migracao das configuracoes antigas sem substituir mapas
 personalizados. O menu de carregar foi navegado com o analogico, sem o
-direcional digital, na compilacao Windows atual.
+direcional digital, nas duas compilacoes atuais. Os testes de 900 frames
+terminaram normalmente: 18,75 segundos no Windows e 78,47 segundos no Linux
+WSL2/Dozen. Esses tempos incluem o boot e nao sao uma medicao de FPS em combate.
 
 O teste Linux do menu com limite de 1.400 frames excedeu seu prazo de 240
 segundos sob llvmpipe e foi interrompido no frame 925. A captura do frame 800

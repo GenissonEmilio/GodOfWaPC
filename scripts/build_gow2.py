@@ -5,6 +5,7 @@ No game or generated code is fetched. Both binaries are compiled from the
 same locally generated C++ and read game data straight from the original ISO.
 """
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -174,6 +175,11 @@ def main():
             raise RuntimeError('Limite de exploracao atingido; ainda ha codigo a descobrir.')
         run([vucompiler, game / 'vu1', generated])
         compile_game()
+    report['built_at_utc'] = datetime.now(timezone.utc).isoformat()
+    report['binary_sha256'] = hashlib.sha256(runner.read_bytes()).hexdigest()
+    report['compiler'] = subprocess.check_output([cxx, '--version'], text=True).splitlines()[0]
+    report['source_commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    report['source_dirty'] = bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT, text=True).strip())
     (build / 'build-report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
     if args.package:
         run([sys.executable, ROOT / 'scripts/package_gow2.py', '--build', build])

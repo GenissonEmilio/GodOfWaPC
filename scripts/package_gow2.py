@@ -23,6 +23,12 @@ def main():
     binary = build / ('ps2run.exe' if windows else 'ps2run')
     if not binary.is_file():
         p.error('Executavel compilado ausente.')
+    report_path = build / 'build-report.json'
+    if not report_path.is_file():
+        p.error('build-report.json ausente. Gere o relatorio para esta compilacao.')
+    report = json.loads(report_path.read_text(encoding='utf-8'))
+    if report.get('binary_sha256') != hashlib.sha256(binary.read_bytes()).hexdigest():
+        p.error('O relatorio nao corresponde ao executavel. Atualize os testes e o relatorio antes de empacotar.')
     out = ROOT / f'dist/GodOfWarII-{target}'
     out.mkdir(parents=True, exist_ok=True)
     shutil.copy2(binary, out / ('GodOfWarII.exe' if windows else 'GodOfWarII.bin'))
