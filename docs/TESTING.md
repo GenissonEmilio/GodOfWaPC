@@ -38,6 +38,18 @@ digitais e `lup`, `ldown`, `lleft`, `lright` para o analogico esquerdo. Ao passa
 eixos explicitamente, prefira `lx`/`ly` em vez de `lup`/`lleft` na mesma acao.
 Essa sessao controla apenas o runtime em teste e nao sintetiza teclas do sistema.
 
+## Diagnostico da GPU
+
+O host utiliza os valores padrao do wgpu e aceita suas variaveis de ambiente
+de diagnostico, como `WGPU_VALIDATION=1`. Se a selecao de adaptador falhar, o
+log inclui o estado e a mensagem retornados pelo wgpu, antes da tentativa do
+renderizador por software. Confira a linha `[gpu]` do log para identificar o
+adaptador realmente usado.
+
+`WGPU_ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER=1` permite testar explicitamente
+um driver nao conforme. Essa opcao permanece desativada por padrao; resultados
+obtidos com ela devem identificar o driver e o ambiente utilizados.
+
 Teste de integracao com um checkpoint proprio:
 
 ```sh

@@ -1109,6 +1109,9 @@ bool init(Mode m) {
     WGPUInstanceExtras extras = {};
     extras.chain.sType = static_cast<WGPUSType>(WGPUSType_InstanceExtras);
     extras.backends = WGPUInstanceBackend_Primary;
+    // Keep wgpu's defaults while allowing explicit diagnostic overrides,
+    // including testing a non-conformant driver in a developer environment.
+    extras.flags = WGPUInstanceFlag_Default | WGPUInstanceFlag_WithEnv;
     WGPUInstanceDescriptor id = WGPU_INSTANCE_DESCRIPTOR_INIT;
     id.nextInChain = &extras.chain;
     g_instance = wgpuCreateInstance(&id);
@@ -1121,8 +1124,9 @@ bool init(Mode m) {
     options.forceFallbackAdapter = std::getenv("PS2_GPU_FALLBACK") != nullptr;
     WGPURequestAdapterCallbackInfo acb = WGPU_REQUEST_ADAPTER_CALLBACK_INFO_INIT;
     acb.mode = WGPUCallbackMode_AllowSpontaneous;
-    acb.callback = [](WGPURequestAdapterStatus status, WGPUAdapter a, WGPUStringView, void *out, void *done) {
+    acb.callback = [](WGPURequestAdapterStatus status, WGPUAdapter a, WGPUStringView message, void *out, void *done) {
         if (status == WGPURequestAdapterStatus_Success) *static_cast<WGPUAdapter *>(out) = a;
+        else std::fprintf(stderr, "[gpu] adapter request failed (%u): %.*s\n", static_cast<unsigned>(status), static_cast<int>(message.length), message.data ? message.data : "");
         *static_cast<bool *>(done) = true;
     };
     acb.userdata1 = &adapter;
