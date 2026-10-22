@@ -4,7 +4,8 @@
   commit `6526f4803d98e10de50bea3af104a4d26e9df033`, licenca MIT.
 - Interface: [Dear ImGui 1.92.5](https://github.com/ocornut/imgui/tree/v1.92.5), MIT.
 - Fonte: Roboto Medium, distribuida com os exemplos do Dear ImGui, Apache-2.0.
-- Janela, controles e audio: [SDL2 2.32.10](https://github.com/libsdl-org/SDL/tree/release-2.32.10), zlib.
+- Janela, controles e audio: [SDL2](https://github.com/libsdl-org/SDL), zlib;
+  versao 2.32.10 no Windows e pacote 2.30.0 do Ubuntu 24.04 na validacao Linux.
 - GPU: [wgpu-native 29.0.1.1](https://github.com/gfx-rs/wgpu-native/tree/v29.0.1.1), MIT/Apache-2.0.
 - Compilador Windows: [LLVM-MinGW 20261020](https://github.com/mstorsjo/llvm-mingw/releases/tag/20261020).
 - Tabelas MPEG/IPU: Play!, aviso original em `runtime/src/ipu/NOTICE`.

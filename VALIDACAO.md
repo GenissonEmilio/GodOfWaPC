@@ -12,7 +12,7 @@ port integral do jogo.
 - SHA256 do executavel:
   `fd403603be46dea70d130695820d28b3f31de6d7e48484a5f006398a605f7dd6`.
 - Traducao EE: 4.444 funcoes, 477.499 instrucoes, 118 unidades C++.
-- VU1: 651 programas compilados a partir das capturas e destinos observados.
+- VU1: 669 programas compilados a partir das capturas e destinos observados.
   Programas ainda nao observados podem utilizar o interpretador do runtime.
 - Base: PS2 Web Recomp, commit `6526f4803d98e10de50bea3af104a4d26e9df033`.
 
@@ -23,7 +23,7 @@ port integral do jogo.
 | Compilacao nativa e link | LLVM-MinGW / Clang 23 | Ubuntu 24.04 / Clang 18 / libc++ |
 | Inicializacao a partir da ISO | 12.000 frames ate o primeiro combate | 1.200 frames de abertura |
 | Combate renderizado | Movimento e ataques na primeira sala | Checkpoint Windows no frame 10.000, executado ate 10.030 |
-| Progresso adicional em Rhodes | Primeira sala, portao, corredor, escada e plataforma da balista no primeiro confronto com o Colosso | Checkpoint de entrada na area do Colosso, frame 37.685 ate 37.700 |
+| Progresso adicional em Rhodes | Primeira sala, portao, corredor, escada; primeiro confronto com o Colosso concluido e chegada ao banho | Trechos reproduzidos do combate, balista, comandos e chegada ao banho a partir dos checkpoints Windows |
 | Launcher e fonte | Captura do renderizador SDL | Captura do renderizador SDL |
 | F1 pausa o jogo e mantem painel ativo | PASS, frame estavel durante 600 ms | PASS, frame estavel durante 600 ms |
 | Retomar pelo F1 | PASS | PASS |
@@ -34,10 +34,13 @@ port integral do jogo.
 | Cartao SIO2: gravar e reler apos reiniciar processo | PASS, 10 execucoes | PASS, 10 execucoes |
 | Cartao SIO2: falha, nova tentativa e substituicao | PASS, arquivo anterior preservado | PASS, arquivo anterior preservado |
 | Cartao SIO2: gravacao forcada ao fechar | PASS | PASS |
+| Save no altar, reinicio do processo e carga pelo menu original | PASS, slot 1 em Rhodes Bathhouse; inventario conferido | PASS, slot 2 gravado no Linux e carregado em novo processo; inventario conferido |
 | Leitura do cartao vazio pelo menu original | Mensagem de ausencia de dados, boot de 900 frames usando analogico | Mesma mensagem, boot de 900 frames com Dozen |
 | Teclado: analogicos, direcional digital e L3/R3 | PASS, oito casos | PASS, oito casos |
 | Sessao por passos: captura, checkpoint e reinicio | PASS | PASS, llvmpipe e Dozen |
-| Abrir bau verde pela interface do jogo | PASS, sequencia de 152 frames | PASS, mesma sequencia e imagem RGB identica |
+| Abrir bau verde pela interface do jogo | PASS, sequencia de 152 frames | PASS; na compilacao com 669 programas VU, diferenca RGB media de 0,00445 por canal |
+| Ataques contra o Colosso e tutorial de orbes azuis | PASS, replay de 3.650 frames | PASS, mesma sequencia; diferenca RGB media de 0,00422 por canal |
+| Balista, quatro comandos de combate e transicao ao banho | PASS, replay de 2.644 frames na compilacao com 669 programas VU; imagem RGB identica a referencia | PASS, mesma sequencia e imagem RGB identica |
 
 As setas do teclado movimentam apenas o analogico esquerdo. O direcional
 digital, que seleciona magia, usa T/H/G/F; I/L/K/J controlam o analogico direito
@@ -47,6 +50,15 @@ personalizados. O menu de carregar foi navegado com o analogico, sem o
 direcional digital, nas duas compilacoes atuais. Os testes de 900 frames
 terminaram normalmente: 18,75 segundos no Windows e 78,47 segundos no Linux
 WSL2/Dozen. Esses tempos incluem o boot e nao sao uma medicao de FPS em combate.
+
+Os replays locais associam cada resultado ao SHA256 do executavel, do
+checkpoint e da sequencia de comandos. A comparacao de imagem verifica o
+quadro observado ao fim do trecho; nao certifica todas as animacoes ou a
+campanha inteira. Na compilacao com 669 programas VU, o Windows repetiu tambem
+a balista e os quatro comandos do primeiro confronto, chegando ao banho no
+frame 51.145 com imagem identica a referencia. Os dois trechos foram repetidos
+no Linux: ataques ate o tutorial de orbes azuis no frame 47.248 e balista ate
+o banho no frame 51.145. A imagem final da balista foi identica nos dois sistemas.
 
 O teste Linux do menu com limite de 1.400 frames excedeu seu prazo de 240
 segundos sob llvmpipe e foi interrompido no frame 925. A captura do frame 800
@@ -100,14 +112,31 @@ contem um save da campanha. A compilacao atual grava em arquivo temporario,
 substitui o destino somente apos sucesso e conserva a tentativa em memoria
 quando a escrita falha.
 
+O save real Windows foi criado pela interface do altar de Rhodes Bathhouse,
+incluindo a formatacao do cartao novo. O jogo confirmou `Save Complete`.
+Apos encerrar o processo, outro processo iniciou sem `--load-state`, leu o
+slot 1 pelo menu original e retornou ao altar. O inventario restaurou as
+Laminas de Atena no nivel 5 e 624 orbes vermelhos; uma captura do inventario
+anterior ao save foi comparada a captura apos a carga (diferenca media RGB
+0,166). Isso valida esse save e esse ponto da campanha no Windows.
+
+No Linux, uma copia do cartao Windows foi lida pelo menu original. O jogo
+restaurou o altar e gravou o progresso no slot 2 desse cartao separado,
+confirmando `Save Complete`. Outro processo Linux, tambem sem checkpoint,
+carregou o slot 2 e restaurou o altar, as Laminas de Atena no nivel 5 e os
+624 orbes. A diferenca media RGB do inventario em relacao a captura Windows
+foi 0,311 por canal. Os dois processos Linux encerraram normalmente. O cartao
+Windows inicial foi preservado. Isso verifica tambem a transferencia de um
+save Windows para Linux; os testes usam o ambiente WSL2/Dozen descrito acima.
+
 ## Limites de verificacao
 
-- A execucao Windows chegou ao primeiro confronto com o Colosso e a plataforma
-  da balista. A conclusao desse confronto, fases posteriores, campanha completa
-  e finais ainda nao foram validados. Podem existir chamadas ou programas VU
-  nao cobertos.
-- O cartao virtual e persistente, mas salvar e carregar em um ponto de save do
-  proprio jogo ainda precisa de teste. O checkpoint usado acima e do runtime.
+- A execucao Windows concluiu o primeiro confronto com o Colosso e chegou ao
+  banho de Rhodes. Fases posteriores, campanha completa e finais ainda nao
+  foram validados. Podem existir chamadas ou programas VU nao cobertos.
+- Salvar e carregar passou nos dois sistemas no primeiro altar. Os demais
+  pontos de save e a campanha completa ainda precisam de teste. Os checkpoints
+  dos replays continuam separados dos saves originais do jogo.
 - Remapeamento e suporte SDL a gamepads foram implementados; nenhum controle
   fisico foi conectado para testar analogicos, vibracao ou todos os botoes.
 - As opcoes 2x/3x, 16:9 e diferentes GPUs ainda precisam de verificacao visual
