@@ -41,6 +41,8 @@ port integral do jogo.
 | Abrir bau verde pela interface do jogo | PASS, sequencia de 152 frames | PASS; na compilacao com 669 programas VU, diferenca RGB media de 0,00445 por canal |
 | Ataques contra o Colosso e tutorial de orbes azuis | PASS, replay de 3.650 frames | PASS, mesma sequencia; diferenca RGB media de 0,00422 por canal |
 | Balista, quatro comandos de combate e transicao ao banho | PASS, replay de 2.644 frames na compilacao com 669 programas VU; imagem RGB identica a referencia | PASS, mesma sequencia e imagem RGB identica |
+| Balanco no gancho e salto ate o corredor de saida | PASS, replay de 185 frames | PASS, mesma sequencia e imagem RGB identica |
+| Escada e sequencia do pe do Colosso | PASS, replay de 660 frames; parede rompida | PASS, mesma sequencia e imagem RGB identica |
 
 As setas do teclado movimentam apenas o analogico esquerdo. O direcional
 digital, que seleciona magia, usa T/H/G/F; I/L/K/J controlam o analogico direito
@@ -59,6 +61,12 @@ a balista e os quatro comandos do primeiro confronto, chegando ao banho no
 frame 51.145 com imagem identica a referencia. Os dois trechos foram repetidos
 no Linux: ataques ate o tutorial de orbes azuis no frame 47.248 e balista ate
 o banho no frame 51.145. A imagem final da balista foi identica nos dois sistemas.
+
+Tambem foram repetidos nas duas plataformas o balanco e salto pelo gancho
+(frames 7.835 a 8.020 de uma nova sessao) e a subida com a sequencia do pe do
+Colosso (13.151 a 13.811 dessa sessao). As capturas finais dos dois trechos
+foram identicas. O Windows prosseguiu pela parede de escalada; a arena seguinte
+e o restante da campanha continuam pendentes.
 
 O teste Linux do menu com limite de 1.400 frames excedeu seu prazo de 240
 segundos sob llvmpipe e foi interrompido no frame 925. A captura do frame 800
