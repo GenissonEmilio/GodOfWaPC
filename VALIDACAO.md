@@ -37,6 +37,7 @@ port integral do jogo.
 | Leitura do cartao vazio pelo menu original | Mensagem de ausencia de dados, boot de 900 frames usando analogico | Mesma mensagem, boot de 900 frames com Dozen |
 | Teclado: analogicos, direcional digital e L3/R3 | PASS, oito casos | PASS, oito casos |
 | Sessao por passos: captura, checkpoint e reinicio | PASS | PASS, llvmpipe e Dozen |
+| Abrir bau verde pela interface do jogo | PASS, sequencia de 152 frames | PASS, mesma sequencia e imagem RGB identica |
 
 As setas do teclado movimentam apenas o analogico esquerdo. O direcional
 digital, que seleciona magia, usa T/H/G/F; I/L/K/J controlam o analogico direito

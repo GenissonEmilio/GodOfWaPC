@@ -38,6 +38,12 @@ digitais e `lup`, `ldown`, `lleft`, `lright` para o analogico esquerdo. Ao passa
 eixos explicitamente, prefira `lx`/`ly` em vez de `lup`/`lleft` na mesma acao.
 Essa sessao controla apenas o runtime em teste e nao sintetiza teclas do sistema.
 
+Teste de integracao com um checkpoint proprio:
+
+```sh
+python3 tests/test_step_control.py --runner build/linux-gow2/ps2run --elf games/gow2/disc/SCUS_974.81 --iso /caminho/jogo.iso --checkpoint games/gow2/checkpoint.state
+```
+
 ## Diagnostico da GPU
 
 O host utiliza os valores padrao do wgpu e aceita suas variaveis de ambiente
@@ -49,12 +55,6 @@ adaptador realmente usado.
 `WGPU_ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER=1` permite testar explicitamente
 um driver nao conforme. Essa opcao permanece desativada por padrao; resultados
 obtidos com ela devem identificar o driver e o ambiente utilizados.
-
-Teste de integracao com um checkpoint proprio:
-
-```sh
-python3 tests/test_step_control.py --runner build/linux-gow2/ps2run --elf games/gow2/disc/SCUS_974.81 --iso /caminho/jogo.iso --checkpoint games/gow2/checkpoint.state
-```
 
 ## Criterio para campanha e saves
 
